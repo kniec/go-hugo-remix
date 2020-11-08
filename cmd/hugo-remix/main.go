@@ -21,6 +21,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(w.String())
-	fmt.Printf(strings.Join(append(w.GenerateHugo(*targetFlag), ""), "\n"))
+	_, genOut := w.GenerateHugo(*targetFlag)
+	fmt.Printf(strings.Join(append(genOut, ""), "\n"))
 	fmt.Println()
 }

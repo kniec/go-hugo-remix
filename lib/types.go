@@ -16,13 +16,60 @@ func (w *Workshop) GetTitle() string {
 	return w.Title
 }
 
+type BaseMeta struct {
+	Title      string
+	Weight     int
+	Chapter    bool
+	Pre        string
+	IncludeTOC bool
+}
+
+type mType map[string]interface{}
+
+func (mt mType) ToStrings() (res []string) {
+	for k, v := range mt {
+		switch v.(type) {
+		case string:
+			res = append(res, fmt.Sprintf(`%s: "%s"`, k, v))
+		case int:
+			res = append(res, fmt.Sprintf(`%s: %d`, k, v))
+		case bool:
+			res = append(res, fmt.Sprintf(`%s: %t`, k, v))
+		}
+	}
+	return
+}
+
+func (bm *BaseMeta) UpdateDict(md mType) (err error, res mType) {
+	res = mType{}
+	for k, v := range md {
+		res[k] = v
+	}
+	res["title"] = bm.Title
+	res["weight"] = bm.Weight
+	res["pre"] = bm.Pre
+	res["include_toc"] = bm.IncludeTOC
+	return
+}
+
 type Subchapter struct {
-	Title  string   `yaml:"title"`
-	Path   string   `yaml:"path"`
-	Source string   `yaml:"source"`
-	Prefix []string `yaml:"prefix"`
-	Weight int      `yaml:"weight"`
-	Enum   string   `yaml:"enum"`
+	Title      string   `yaml:"title"`
+	Path       string   `yaml:"path"`
+	Source     string   `yaml:"source"`
+	Prefix     []string `yaml:"prefix"`
+	Weight     int      `yaml:"weight"`
+	IncludeTOC bool     `yaml:"include_toc"`
+	Enum       string   `yaml:"enum"`
+}
+
+func (s *Subchapter) ToBaseMeta() BaseMeta {
+	return BaseMeta{
+		Title:      s.Title,
+		Weight:     s.Weight,
+		Chapter:    false,
+		Pre:        s.Enum,
+		IncludeTOC: s.IncludeTOC,
+	}
 }
 
 // CreateSubchapter returns a subchapter
@@ -77,6 +124,17 @@ type Chapter struct {
 	Weight  int      `yaml:"weight"`
 	Enum    string   `yaml:"enum"`
 	Subchap []Subchapter
+}
+
+// ToBaseMeta converts a chapter to update the metadata of a file
+func (c *Chapter) ToBaseMeta() BaseMeta {
+	return BaseMeta{
+		Title:      c.Title,
+		Weight:     c.Weight,
+		Chapter:    true,
+		Pre:        c.Enum,
+		IncludeTOC: true,
+	}
 }
 
 func (c *Chapter) String() (res []string) {
@@ -204,27 +262,37 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 	return
 }
 
-// WalkSourcePath iterates over Chapter and Subchapters and copies the
-func (w *Workshop) GenerateHugo(t string) (res []string) {
-	err := os.Mkdir(t, 0755)
+// GenerateHugo iterates over Chapter and Subchapters and copies the base, chapters and subchapters
+// into a target directory
+func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
+	err = os.Mkdir(t, 0755)
 	if err != nil {
-		panic(err)
+		return
 	}
+	res = append(res, fmt.Sprintf("cp -r %s/* %s/", w.BaseURL, t))
 	err = cp.Copy(w.BaseURL, t)
 	if err != nil {
-		panic(err)
+		return
 	}
 
-	res = append(res, fmt.Sprintf("cp -r %s/* %s/", w.BaseURL, t))
 	for _, chap := range w.Chaps {
 		tPath := fmt.Sprintf("%s/content/%s", t, chap.Path)
 		res = append(res, fmt.Sprintf("cp -r %s %s", chap.Source, tPath))
+		err = cp.Copy(chap.Source, tPath)
+		if err != nil {
+			return
+		}
+
 		for _, sub := range chap.Subchap {
 			tPath := fmt.Sprintf("%s/content/%s/%s", t, chap.Path, sub.Path)
 			res = append(res, fmt.Sprintf("cp -r %s %s", sub.Source, tPath))
+			err = cp.Copy(sub.Source, tPath)
+			if err != nil {
+				return
+			}
 		}
 	}
-	return res
+	return
 }
 
 /*********

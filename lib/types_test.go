@@ -2,8 +2,8 @@ package redux
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"sort"
 	"strings"
 	"testing"
 
@@ -23,11 +23,6 @@ chaps:
 
 var testYaml = Workshop{
 	Title: "Workshop1",
-}
-
-func readFile(path string) ([]byte, error) {
-	yamlFile, err := ioutil.ReadFile(path)
-	return yamlFile, err
 }
 
 // Note: struct fields must be public in order for unmarshal to
@@ -164,7 +159,92 @@ func TestGenerateHugo(t *testing.T) {
 	_, w := CreateWorkshopFromFile("../misc/test.yaml")
 	log.Printf("w.Chaps[0]:")
 	fmt.Println(w.Chaps[0].String())
-	res := w.GenerateHugo("/tmp")
+	_, res := w.GenerateHugo("/tmp")
 	fmt.Printf(strings.Join(res, "\n"))
 	t.Errorf("Wait")
+}
+
+// BASE META
+
+func TestUpdateDict(t *testing.T) {
+	bm := BaseMeta{
+		Title:      "Title1",
+		Weight:     10,
+		Chapter:    true,
+		Pre:        "1. ",
+		IncludeTOC: true,
+	}
+	dict := mType{
+		"title":       "TitleDict",
+		"weight":      20,
+		"chapter":     true,
+		"pre":         "I. ",
+		"include_toc": false,
+	}
+	_, cur := bm.UpdateDict(dict)
+	expStr := "Title1"
+	curStr := cur["title"]
+	if expStr != curStr {
+		t.Errorf("Title: oldDict: '%s', bm: '%s', newDict: '%s'", dict["title"], bm.Title, curStr)
+	}
+	expInt := 10
+	curInt := cur["weight"]
+	if expInt != curInt {
+		t.Errorf("Weight: oldDict: '%d', bm: '%d', newDict: '%d'", dict["weight"], bm.Weight, curInt)
+	}
+	expStr = "1. "
+	curStr = cur["pre"]
+	if expStr != curStr {
+		t.Errorf("Pre: oldDict: '%s', bm: '%s', newDict: '%s'", dict["pre"], bm.Pre, curStr)
+	}
+	expBool := true
+	curBool := cur["include_toc"]
+	if expBool != curBool {
+		t.Errorf("IncludeTOC: oldDict: '%t', bm: '%t', newDict: '%t', expected: '%t'", dict["include_toc"], bm.IncludeTOC, curBool, expBool)
+	}
+}
+
+func TestToStrings(t *testing.T) {
+	dict := mType{
+		"title":       "TitleDict",
+		"weight":      20,
+		"chapter":     true,
+		"pre":         "I. ",
+		"include_toc": false,
+	}
+	exp := []string{
+		`title: "TitleDict"`,
+		`weight: 20`,
+		`chapter: true`,
+		`pre: "I. "`,
+		`include_toc: false`,
+	}
+	cur := dict.ToStrings()
+	sort.Strings(exp)
+	sort.Strings(cur)
+	for i := range cur {
+		if cur[i] != exp[i] {
+			t.Errorf("Exp: '%v' / Cur '%v'", exp[i], cur[i])
+		}
+	}
+}
+
+func testEq(a, b []string) bool {
+
+	// If one is nil, the other must also be nil.
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
