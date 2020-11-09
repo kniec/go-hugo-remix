@@ -2,7 +2,10 @@ package redux
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"sort"
 	"strings"
 	"testing"
@@ -164,13 +167,50 @@ func TestGenerateHugo(t *testing.T) {
 	_, w := CreateWorkshopFromFile("../misc/test.yaml")
 	log.Printf("w.Chaps[0]:")
 	fmt.Println(w.Chaps[0].String())
-	_, res := w.GenerateHugo("/tmp")
+	tdir, _ := ioutil.TempDir(os.TempDir(), "hugo-")
+	log.Printf("TempDir: %s", tdir)
+	_, res := w.GenerateHugo(tdir)
 	fmt.Printf(strings.Join(res, "\n"))
+	err := os.RemoveAll(tdir)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
+// TestUpdateChapIndex will create a Hugo Workshop and
+// update the Chapter index files based on the workshop YAML
+func TestUpdateIndex(t *testing.T) {
+	_, w := CreateWorkshopFromFile("../misc/test.yaml")
+	tdir, _ := ioutil.TempDir(os.TempDir(), "hugo-")
+	log.Printf("TempDir: %s", tdir)
+	w.GenerateHugo(tdir)
+	// CleanUP
+	c := Checker{}
+	fpath := path.Join(tdir, "content/chap2/_index.md")
+	err := c.ReadMeta(fpath)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if c.Meta["title"] != "Chapter2" {
+		t.Errorf("Wrong title: '%s'", c.Meta["title"])
+	}
+	c2c1 := Checker{}
+	fpath = path.Join(tdir, "content/chap2/sub1/_index.md")
+	err = c2c1.ReadMeta(fpath)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if c2c1.Meta["title"] != "Chap2Sub1" {
+		t.Errorf("Wrong title: %s", c2c1.Meta["title"])
+	}
+	// CleanUP
+	err = os.RemoveAll(tdir)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 }
 
 // BASE META
-
 func TestUpdateDict(t *testing.T) {
 	bm := BaseMeta{
 		Title:      "Title1",

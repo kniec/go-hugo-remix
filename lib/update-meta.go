@@ -7,6 +7,7 @@ the metadata as well as the language suffix
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark-meta"
+	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
 )
 
@@ -22,6 +23,8 @@ type m = map[string]interface{}
 
 func GetDefaultChapIndex() m {
 	return m{
+		"title":       "",
+		"weight":      0,
 		"chapter":     true,
 		"pre":         "",
 		"include_toc": true,
@@ -29,6 +32,8 @@ func GetDefaultChapIndex() m {
 }
 func GetDefaultSubChapIndex() m {
 	return m{
+		"title":       "",
+		"weight":      0,
 		"chapter":     false,
 		"pre":         "",
 		"include_toc": true,
@@ -37,6 +42,8 @@ func GetDefaultSubChapIndex() m {
 
 func GetDefaultSubChapNonIndex() m {
 	return m{
+		"title":       "",
+		"weight":      0,
 		"chapter":     false,
 		"pre":         "",
 		"include_toc": false,
@@ -89,36 +96,58 @@ func (c *Checker) ReadMeta(fpath string) (err error) {
 // UpdateMeta update the file metadata (c.Meta) with what comes from the workshop.yaml
 func (c *Checker) UpdateMeta(bm BaseMeta) (err error) {
 	// TODO: that's the place to follow up
+	log.Printf("UpdateMeta.Before: %v+", c.Meta)
 	err, c.Meta = bm.UpdateDict(c.Meta)
+	log.Printf("UpdateMeta.After: %v+", c.Meta)
 	return
 }
 
-func (c *Checker) ReplaceHeader(md mType, fpath string) (err error) {
-	out := []string{}
+func (c *Checker) ToMetaLines() (res []string) {
+	res = append(res, fmt.Sprintf(`title: "%s"`, c.Meta["title"]))
+	res = append(res, fmt.Sprintf("weight: %d", c.Meta["weight"]))
+	res = append(res, fmt.Sprintf(`chapter: %t`, c.Meta["chapter"]))
+	res = append(res, fmt.Sprintf(`pre: "%s"`, c.Meta["pre"]))
+	res = append(res, fmt.Sprintf(`include_toc: %t`, c.Meta["include_toc"]))
+	return
+}
+func (c *Checker) ReplaceHeader(fpath string) (err error) {
 	// c.Meta is what is read from the file
 	source, err := ioutil.ReadFile(fpath)
-	lines := strings.Split(string(source), "\n")
-	sawDashes := 0
-	for _, line := range lines {
-		if strings.Contains(line, "---") {
-			out = append(out, line)
-			sawDashes++
-		}
+	inputLines := strings.Split(string(source), "\n")
+	log.Printf("inputLines: %v", inputLines)
+	metaLines := c.ToMetaLines()
+	log.Printf("ToMetaLines: %v", metaLines)
 
-		if sawDashes > 1 {
-			out = append(out, line)
-			continue
-		}
-		sp := strings.Split(line, ":")
-		if len(sp) == 2 {
-
-		}
-
+	err, outputLines := updateMetaLines(inputLines, metaLines)
+	log.Printf("outputLines: %v", outputLines)
+	if err != nil {
+		log.Fatalln(err)
 	}
-	output := strings.Join(lines, "\n")
+	output := strings.Join(outputLines, "\n")
 	err = ioutil.WriteFile(fpath, []byte(output), 0644)
 	if err != nil {
 		log.Fatalln(err)
+	}
+	return
+}
+
+func updateMetaLines(inputLines, metaLines []string) (err error, outputLines []string) {
+	sawDashes := 0
+	for _, line := range inputLines {
+		if strings.Contains(line, "---") {
+			if sawDashes == 0 {
+				outputLines = append(outputLines, line)
+				outputLines = append(outputLines, metaLines...)
+			}
+			sawDashes++
+		}
+		switch {
+		case sawDashes == 1:
+			continue
+		case sawDashes > 1:
+			outputLines = append(outputLines, line)
+			continue
+		}
 	}
 	return
 }

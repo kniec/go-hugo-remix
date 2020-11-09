@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -22,6 +24,45 @@ type BaseMeta struct {
 	Chapter    bool
 	Pre        string
 	IncludeTOC bool
+}
+
+/********
+* BaseMeta Update MD files
+ */
+func (bm *BaseMeta) ChapIndexWalker(tpath string, info os.FileInfo, err error) error {
+	switch {
+	case info.IsDir():
+		return nil
+	default:
+		match, _ := regexp.MatchString(`_index.*\.md$`, info.Name())
+		if match {
+			c := Checker{}
+			log.Printf("c.ReadMeta(%s)", tpath)
+			err := c.ReadMeta(tpath)
+			if err != nil {
+				return err
+			}
+			err = c.UpdateMeta(*bm)
+			if err != nil {
+				log.Println(err.Error())
+				return err
+			}
+			err = c.ReplaceHeader(tpath)
+			if err != nil {
+				log.Println(err.Error())
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// UpdateIndex takes a directory and finds `_index\*.md` files to update
+// Skipping subdirs
+func (bm *BaseMeta) UpdateIndex(tpath string) (err error) {
+	log.Printf(">>> Walking %s", tpath)
+	err = filepath.Walk(tpath, bm.ChapIndexWalker)
+	return
 }
 
 type mType map[string]interface{}
@@ -47,6 +88,7 @@ func (bm *BaseMeta) UpdateDict(md mType) (err error, res mType) {
 	}
 	res["title"] = bm.Title
 	res["weight"] = bm.Weight
+	res["chapter"] = bm.Chapter
 	res["pre"] = bm.Pre
 	res["include_toc"] = bm.IncludeTOC
 	return
@@ -274,7 +316,7 @@ func (w *Workshop) WriteHugoConfig(tpath string) (err error) {
 // GenerateHugo iterates over Chapter and Subchapters and copies the base, chapters and subchapters
 // into a target directory
 func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
-	log.Printf("GenerateHugo: mkdir")
+	log.Printf("GenerateHugo: %s", t)
 	err = os.MkdirAll(t, 0755)
 	if err != nil {
 		log.Printf(err.Error())
@@ -324,6 +366,8 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 				return
 			}
 		}
+		bm := chap.ToBaseMeta()
+		bm.UpdateIndex(path.Join(t, "content", chap.Path, ""))
 		for _, sub := range chap.Subchap {
 			if _, er := os.Stat(path.Join(sub.Source, "content")); os.IsNotExist(er) {
 				targetContentPath := fmt.Sprintf("%s/content/%s/%s", t, chap.Path, sub.Path)
@@ -351,6 +395,8 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 					return
 				}
 			}
+			bm = sub.ToBaseMeta()
+			bm.UpdateIndex(path.Join(t, "content", chap.Path, sub.Path, ""))
 		}
 	}
 	return

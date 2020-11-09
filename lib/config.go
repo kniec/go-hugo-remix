@@ -47,6 +47,7 @@ func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 	}
 	return
 }
+
 func (hc *HugoConfig) WriteConfig(tFile string) (err error) {
 	f, err := os.Create(tFile)
 	if err != nil {
