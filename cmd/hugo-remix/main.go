@@ -25,6 +25,6 @@ func main() {
 	fmt.Printf(strings.Join(append(genOut, ""), "\n"))
 	fmt.Println()
 	// WriteHugoConfig
-	//hc := remix.HugoConfig{}
+	w.WriteHugoConfig(*targetFlag)
 
 }

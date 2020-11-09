@@ -265,7 +265,9 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 }
 
 // WriteHugoConfig generates HugoConfig and puts a config file into the workshop dir
-func (w *Workshop) WriteHugoConfig() (err error) {
+func (w *Workshop) WriteHugoConfig(tpath string) (err error) {
+	err, hc := CreateHugoConfigFromWorkshop(*w)
+	hc.WriteConfig(path.Join(tpath, "config.toml"))
 	return
 }
 

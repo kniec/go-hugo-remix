@@ -33,7 +33,7 @@ func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 	}
 	pc := ParaConfig{
 		Author:           "Christian Kniep",
-		Description:      "My first workshop to test out the go redux script",
+		Description:      w.Description,
 		ShowVisitedLinks: false,
 		EditURL:          "https://github.com",
 	}
@@ -41,7 +41,7 @@ func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 		Title:    w.Title,
 		BaseURL:  "https://example.org",
 		LangCode: "en-us",
-		Theme:    "hugo-theme-learn",
+		Theme:    "learn",
 		Outputs:  oc,
 		Params:   pc,
 	}
