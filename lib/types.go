@@ -387,7 +387,7 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 					return
 				}
 				srcStaticPath := fmt.Sprintf("%s/static", sub.Source)
-				targetStaticPath := fmt.Sprintf("%s/static/%s/%s", t, chap.Path, sub.Path)
+				targetStaticPath := fmt.Sprintf("%s/static", t)
 				res = append(res, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
 				err = CopyDir(srcStaticPath, targetStaticPath)
 				if err != nil {
