@@ -27,6 +27,26 @@ type ParaConfig struct {
 	EditURL          string `toml:"editURL"`
 }
 
+func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
+	oc := OutConfig{
+		Home: []string{"HTML", "RSS", "JSON"},
+	}
+	pc := ParaConfig{
+		Author:           "Christian Kniep",
+		Description:      "My first workshop to test out the go redux script",
+		ShowVisitedLinks: false,
+		EditURL:          "https://github.com",
+	}
+	hc = HugoConfig{
+		Title:    w.Title,
+		BaseURL:  "https://example.org",
+		LangCode: "en-us",
+		Theme:    "hugo-theme-learn",
+		Outputs:  oc,
+		Params:   pc,
+	}
+	return
+}
 func (hc *HugoConfig) WriteConfig(tFile string) (err error) {
 	f, err := os.Create(tFile)
 	if err != nil {

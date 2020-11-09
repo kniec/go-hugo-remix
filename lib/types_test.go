@@ -12,29 +12,34 @@ import (
 
 var data = `
 title: Test
+description: "Super workshop"
 `
 
 var DataChap = `
 title: Test
+description: "Super workshop"
 chaps:
   - chap1:
-     title: Chapter1
+    title: Chapter1
 `
 
 var testYaml = Workshop{
-	Title: "Workshop1",
+	Title:       "Workshop1",
+	Description: "Super workshop",
 }
 
 // Note: struct fields must be public in order for unmarshal to
 // correctly populate the data.
-
 func TestParse(t *testing.T) {
 	w := Workshop{}
 	w.Parse([]byte(data))
 	exp := "Test"
 	if w.GetTitle() != exp {
-		log.Printf("%v+", w)
 		t.Errorf("workshop.title should be '%s', was '%s'", exp, w.GetTitle())
+	}
+	exp = "Super workshop"
+	if w.Description != exp {
+		t.Errorf("workshop.Description workshop should be '%s', was '%s'", exp, w.Description)
 	}
 }
 
@@ -90,7 +95,7 @@ func TestCompateChap1(t *testing.T) {
 }
 
 func TestCreateWorkshop(t *testing.T) {
-	w := CreateWorkshop("Title", "../misc/hugo", []Chapter{})
+	w := CreateWorkshop("Title", "Description", "../misc/hugo", []Chapter{})
 	if w.Title != "Title" && len(w.Chaps) == 0 {
 		t.Errorf("Title should be 'Title' w/o chapters")
 	}
@@ -161,7 +166,7 @@ func TestGenerateHugo(t *testing.T) {
 	fmt.Println(w.Chaps[0].String())
 	_, res := w.GenerateHugo("/tmp")
 	fmt.Printf(strings.Join(res, "\n"))
-	t.Errorf("Wait")
+
 }
 
 // BASE META
@@ -227,24 +232,4 @@ func TestToStrings(t *testing.T) {
 			t.Errorf("Exp: '%v' / Cur '%v'", exp[i], cur[i])
 		}
 	}
-}
-
-func testEq(a, b []string) bool {
-
-	// If one is nil, the other must also be nil.
-	if (a == nil) != (b == nil) {
-		return false
-	}
-
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
 }

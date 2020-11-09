@@ -23,5 +23,6 @@ func TestWriteConfig(t *testing.T) {
 		Params:   pc,
 	}
 	hc.WriteConfig("./test_write_config.toml")
-
 }
+
+

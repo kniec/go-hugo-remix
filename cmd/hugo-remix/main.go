@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	redux "github.com/qnib/go-hugo-redux/lib"
+	remix "github.com/qnib/go-hugo-remix/lib"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 func main() {
 	// Read Workshop config from file
 	flag.Parse()
-	err, w := redux.CreateWorkshopFromFile(*cfgFlag)
+	err, w := remix.CreateWorkshopFromFile(*cfgFlag)
 	if err != nil {
 		panic(err)
 	}
@@ -24,4 +24,7 @@ func main() {
 	_, genOut := w.GenerateHugo(*targetFlag)
 	fmt.Printf(strings.Join(append(genOut, ""), "\n"))
 	fmt.Println()
+	// WriteHugoConfig
+	//hc := remix.HugoConfig{}
+
 }

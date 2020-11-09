@@ -1,13 +1,4 @@
-title = "My Workshop"
+baseURL = "http://example.org/"
 languageCode = "en-us"
-baseURL = "https://example.org"
+title = "My New Hugo Site"
 theme = "hugo-theme-learn"
-
-[Outputs]
-  home = ["HTML", "RSS", "JSON"]
-
-[Params]
-  author = "Christian Kniep"
-  description = "My first workshop to test out the go redux script"
-  showVisitedLinks = false
-  editURL = "https://github.com"

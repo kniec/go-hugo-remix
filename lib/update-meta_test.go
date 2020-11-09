@@ -71,6 +71,6 @@ func TestUpdateMeta(t *testing.T) {
 	}
 }
 
-func TestUpdateMetaFile(t *testing.T) {
+/*func TestUpdateMetaFile(t *testing.T) {
 	t.Errorf("Wait")
-}
+}*/

@@ -7,6 +7,6 @@ pre = "<b>II. </b>"
 
 ### Chapter 2
 
-# Some Chapter title
+Wikipedia Logo
 
-Lorem Ipsum.
+![](./images/wikipedia.png)

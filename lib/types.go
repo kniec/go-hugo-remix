@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"strings"
 
-	cp "github.com/otiai10/copy"
 	"gopkg.in/yaml.v2"
 )
 
@@ -193,8 +193,9 @@ func (c *Chapter) CompareChap(c2 Chapter) (err error, fails []string) {
 
 // Workshop references a workshop with all its metadata
 type Workshop struct {
-	Title   string `yaml:"title"`
-	BaseURL string `yaml:"baseurl"`
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+	BaseURL     string `yaml:"baseurl"`
 	// HugoBase path to copy from
 	// Switch to embed hugo files later
 	// -> https://stackoverflow.com/questions/17796043/how-to-embed-files-into-golang-binaries
@@ -203,12 +204,13 @@ type Workshop struct {
 }
 
 // CreateWorkshop creates a workshop
-func CreateWorkshop(t, burl string, c []Chapter) Workshop {
+func CreateWorkshop(t, desc, burl string, c []Chapter) Workshop {
 	return Workshop{
-		Title:    t,
-		BaseURL:  burl,
-		HugoBase: "../misc/hugo/",
-		Chaps:    c,
+		Title:       t,
+		Description: desc,
+		BaseURL:     burl,
+		HugoBase:    "../misc/hugo/",
+		Chaps:       c,
 	}
 }
 
@@ -262,33 +264,90 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 	return
 }
 
+// WriteHugoConfig generates HugoConfig and puts a config file into the workshop dir
+func (w *Workshop) WriteHugoConfig() (err error) {
+	return
+}
+
 // GenerateHugo iterates over Chapter and Subchapters and copies the base, chapters and subchapters
 // into a target directory
 func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
-	err = os.Mkdir(t, 0755)
+	log.Printf("GenerateHugo: mkdir")
+	err = os.MkdirAll(t, 0755)
 	if err != nil {
+		log.Printf(err.Error())
 		return
 	}
-	res = append(res, fmt.Sprintf("cp -r %s/* %s/", w.BaseURL, t))
-	err = cp.Copy(w.BaseURL, t)
+	msg := fmt.Sprintf("cp -r %s/* %s/", w.BaseURL, t)
+	log.Printf(msg)
+	res = append(res, msg)
+	err = CopyDir(w.BaseURL, t)
 	if err != nil {
+		log.Printf(err.Error())
 		return
 	}
 
 	for _, chap := range w.Chaps {
-		tPath := fmt.Sprintf("%s/content/%s", t, chap.Path)
-		res = append(res, fmt.Sprintf("cp -r %s %s", chap.Source, tPath))
-		err = cp.Copy(chap.Source, tPath)
-		if err != nil {
-			return
-		}
-
-		for _, sub := range chap.Subchap {
-			tPath := fmt.Sprintf("%s/content/%s/%s", t, chap.Path, sub.Path)
-			res = append(res, fmt.Sprintf("cp -r %s %s", sub.Source, tPath))
-			err = cp.Copy(sub.Source, tPath)
+		// TODO: we are assuming that 'static' is present once 'content' is!
+		srcContent := path.Join(chap.Source, "content")
+		log.Printf("Check if '%s' exists", srcContent)
+		if _, er := os.Stat(srcContent); os.IsNotExist(er) {
+			log.Printf("%s does not exists, so we copy the flat MD files", srcContent)
+			// If it does not exists, we expect to have flat Markdown files within the source
+			// and implictly no static content (like screenshots)
+			targetContentPath := fmt.Sprintf("%s/content/%s", t, chap.Path)
+			res = append(res, fmt.Sprintf("cp -r %s %s", chap.Source, targetContentPath))
+			err = CopyDir(chap.Source, targetContentPath)
 			if err != nil {
+				log.Println(err.Error())
 				return
+			}
+		} else {
+			// if it DOES exists, we expect to have a content and a static dir which needs to be copied seperately
+			// while removing the dirs from the source
+			srcContentPath := fmt.Sprintf("%s/content", chap.Source)
+			targetContentPath := fmt.Sprintf("%s/content/%s", t, chap.Path)
+			res = append(res, fmt.Sprintf("cp -r %s %s", srcContentPath, targetContentPath))
+			err = CopyDir(srcContentPath, targetContentPath)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+			srcStaticPath := fmt.Sprintf("%s/static", chap.Source)
+			targetStaticPath := fmt.Sprintf("%s/static", t)
+			res = append(res, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
+			err = CopyDir(srcStaticPath, targetStaticPath)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+		}
+		for _, sub := range chap.Subchap {
+			if _, er := os.Stat(path.Join(sub.Source, "content")); os.IsNotExist(er) {
+				targetContentPath := fmt.Sprintf("%s/content/%s/%s", t, chap.Path, sub.Path)
+				res = append(res, fmt.Sprintf("cp -r %s %s", sub.Source, targetContentPath))
+				err = CopyDir(sub.Source, targetContentPath)
+				if err != nil {
+					log.Println(err.Error())
+					return
+				}
+			} else {
+				srcContentPath := fmt.Sprintf("%s/content", sub.Source)
+				targetContentPath := fmt.Sprintf("%s/content/%s/%s", t, chap.Path, sub.Path)
+				res = append(res, fmt.Sprintf("cp -r %s %s", srcContentPath, targetContentPath))
+				err = CopyDir(srcContentPath, targetContentPath)
+				if err != nil {
+					log.Println(err.Error())
+					return
+				}
+				srcStaticPath := fmt.Sprintf("%s/static", sub.Source)
+				targetStaticPath := fmt.Sprintf("%s/static/%s/%s", t, chap.Path, sub.Path)
+				res = append(res, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
+				err = CopyDir(srcStaticPath, targetStaticPath)
+				if err != nil {
+					log.Println(err.Error())
+					return
+				}
 			}
 		}
 	}

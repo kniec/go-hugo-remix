@@ -1,4 +1,5 @@
 title: Workshop1
+description: "Workshop description"
 baseurl: ../misc/hugo
 chaps:
   - chapter1: 
