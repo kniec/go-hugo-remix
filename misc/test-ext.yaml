@@ -1,0 +1,24 @@
+title: Workshop2
+description: "Workshop1 extended with Chapter3"
+baseurl: ../../misc/hugo
+base-workshop: ./test.yaml
+chaps:
+  - chapter3: 
+    path: chap3
+    source: ../../misc/test/chap3
+    title: Chapter3
+    weight: 30
+    enum: "III. "
+    subchap: 
+      - c3sub1: 
+        path: sub1
+        source: ../../misc/test/sub1
+        title: Chap3Sub1
+        weight: 10
+        enum: "1. "
+      - c3sub2: 
+        path: sub2
+        source: ../../misc/test/sub2
+        title: Chap3Sub2
+        weight: 20
+        enum: "2. "

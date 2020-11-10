@@ -162,6 +162,26 @@ func TestParseFile_CompareTestYAML(t *testing.T) {
 	}
 }
 
+// Extending test-ext.yaml with test.yaml
+func Test_ExtendFromWorkshop(t *testing.T) {
+	_, wExt := CreateWorkshopFromFile("../misc/test-ext.yaml")
+	_, w := CreateWorkshopFromFile("../misc/test.yaml")
+	wExt.ExtendFromWorkshop(w)
+	c1In := false
+	c2In := false
+	for _, c := range wExt.Chaps {
+		if c.Path == "chap1" {
+			c1In = true
+		}
+		if c.Path == "chap2" {
+			c2In = true
+		}
+	}
+	if !c1In || !c2In {
+		t.Error("chap3 should be in ")
+	}
+}
+
 // TestGenerateHugo will take the test.yaml and generate the hugo workshop
 func TestGenerateHugo(t *testing.T) {
 	_, w := CreateWorkshopFromFile("../misc/test.yaml")

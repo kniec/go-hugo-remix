@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/qnib/go-hugo-remix/lib/helper"
 )
 
 // GetTitle returns the title
@@ -242,7 +244,9 @@ type Workshop struct {
 	// Switch to embed hugo files later
 	// -> https://stackoverflow.com/questions/17796043/how-to-embed-files-into-golang-binaries
 	HugoBase string `yaml:"base"`
-	Chaps    []Chapter
+	// YAML file to extend workshop with
+	BaseWorkshop string `yaml:"base-workshop"`
+	Chaps        []Chapter
 }
 
 // CreateWorkshop creates a workshop
@@ -277,6 +281,29 @@ func (w *Workshop) CompareWorkshops(w2 Workshop) (err error, fails []string) {
 	return
 }
 
+// ExtendFromWorkshop takes w2 and extends w with it's chapters (authors)
+// -> if a path (chapter || chapter/subchap) already exist in w, it WILL NOT be overwritten
+func (w *Workshop) ExtendFromWorkshop(w2 Workshop) (err error) {
+	oldPaths := helper.NewStrSet()
+	for _, oc := range w.Chaps {
+		oldPaths.Add(oc.Path)
+		for _, ocs := range oc.Subchap {
+			oldPaths.Add(path.Join(oc.Path, ocs.Path))
+		}
+	}
+	for _, chap := range w2.Chaps {
+		//fmt.Printf("> Check w2.Chap.Path '%s'", chap.Path)
+		if !oldPaths.Contains(chap.Path) {
+			//fmt.Printf(" - NOT FOUND in old chaps\n")
+			w.Chaps = append(w.Chaps, chap)
+		} else {
+			//fmt.Printf(" - FOUND in old chaps\n")
+			log.Printf("!! Chap.Path '%s' already exists; won't extend the subchaps", chap.Path)
+		}
+	}
+	return
+}
+
 // Parse takes a byte array and parses it
 func (w *Workshop) Parse(yData []byte) {
 	err := yaml.Unmarshal(yData, &w)
@@ -303,6 +330,13 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
 	w.Parse(yData)
+	if w.BaseWorkshop != "" {
+		e, wExt := CreateWorkshopFromFile(w.BaseWorkshop)
+		if e != nil {
+			return e, w
+		}
+		w.ExtendFromWorkshop(wExt)
+	}
 	return
 }
 
