@@ -5,8 +5,5 @@ chapter: true
 pre: "<b>II. </b>"
 ---
 
-### Chapter 2
+### Chapter 3
 
-Wikipedia Logo
-
-![](./images/wikipedia.png)

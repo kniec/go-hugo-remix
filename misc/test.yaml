@@ -1,6 +1,7 @@
 title: Workshop1
 description: "Workshop description"
 baseurl: ../misc/hugo
+source: ../misc/test/workshop1
 chaps:
   - chapter1: 
     path: chap1

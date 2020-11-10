@@ -246,16 +246,19 @@ type Workshop struct {
 	HugoBase string `yaml:"base"`
 	// YAML file to extend workshop with
 	BaseWorkshop string `yaml:"base-workshop"`
-	Chaps        []Chapter
+	// source is the content of the base-url
+	Source string `yaml:"source"`
+	Chaps  []Chapter
 }
 
 // CreateWorkshop creates a workshop
-func CreateWorkshop(t, desc, burl string, c []Chapter) Workshop {
+func CreateWorkshop(t, desc, burl, src string, c []Chapter) Workshop {
 	return Workshop{
 		Title:       t,
 		Description: desc,
 		BaseURL:     burl,
 		HugoBase:    "../misc/hugo/",
+		Source:      src,
 		Chaps:       c,
 	}
 }
@@ -331,7 +334,8 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 	}
 	w.Parse(yData)
 	if w.BaseWorkshop != "" {
-		e, wExt := CreateWorkshopFromFile(w.BaseWorkshop)
+		bDir := filepath.Dir(fpath)
+		e, wExt := CreateWorkshopFromFile(path.Join(bDir, w.BaseWorkshop))
 		if e != nil {
 			return e, w
 		}
@@ -364,7 +368,40 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 		log.Printf(err.Error())
 		return
 	}
-
+	// WOrkshop Base FIles
+	srcContent := path.Join(w.Source, "content")
+	log.Printf("Check if '%s' exists", srcContent)
+	if _, er := os.Stat(srcContent); os.IsNotExist(er) {
+		log.Printf("%s does not exists, so we copy the flat MD files", srcContent)
+		// If it does not exists, we expect to have flat Markdown files within the source
+		// and implictly no static content (like screenshots)
+		targetContentPath := fmt.Sprintf("%s/content/", t)
+		res = append(res, fmt.Sprintf("cp -r %s %s", w.Source, targetContentPath))
+		err = CopyDir(w.Source, targetContentPath)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+	} else {
+		// if it DOES exists, we expect to have a content and a static dir which needs to be copied seperately
+		// while removing the dirs from the source
+		srcContentPath := fmt.Sprintf("%s/content", w.Source)
+		targetContentPath := fmt.Sprintf("%s/content", t)
+		res = append(res, fmt.Sprintf("cp -r %s %s", srcContentPath, targetContentPath))
+		err = CopyDir(srcContentPath, targetContentPath)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+		srcStaticPath := fmt.Sprintf("%s/static", w.Source)
+		targetStaticPath := fmt.Sprintf("%s/static", t)
+		res = append(res, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
+		err = CopyDir(srcStaticPath, targetStaticPath)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+	}
 	for _, chap := range w.Chaps {
 		// TODO: we are assuming that 'static' is present once 'content' is!
 		srcContent := path.Join(chap.Source, "content")

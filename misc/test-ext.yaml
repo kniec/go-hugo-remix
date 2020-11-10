@@ -2,6 +2,7 @@ title: Workshop2
 description: "Workshop1 extended with Chapter3"
 baseurl: ../../misc/hugo
 base-workshop: ./test.yaml
+source: ../misc/test/workshop3
 chaps:
   - chapter3: 
     path: chap3

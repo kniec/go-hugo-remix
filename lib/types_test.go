@@ -98,7 +98,7 @@ func TestCompateChap1(t *testing.T) {
 }
 
 func TestCreateWorkshop(t *testing.T) {
-	w := CreateWorkshop("Title", "Description", "../misc/hugo", []Chapter{})
+	w := CreateWorkshop("Title", "Description", "../misc/hugo", "../misc/test/workshop1", []Chapter{})
 	if w.Title != "Title" && len(w.Chaps) == 0 {
 		t.Errorf("Title should be 'Title' w/o chapters")
 	}
