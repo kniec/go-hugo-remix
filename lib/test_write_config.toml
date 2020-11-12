@@ -1,7 +1,7 @@
 title = "My Workshop"
 languageCode = "en-us"
 baseURL = "https://example.org"
-theme = "hugo-theme-learn"
+theme = ["hugo-theme-learn"]
 
 [Outputs]
   home = ["HTML", "RSS", "JSON"]

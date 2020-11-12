@@ -18,11 +18,9 @@ func TestWriteConfig(t *testing.T) {
 		Title:    "My Workshop",
 		BaseURL:  "https://example.org",
 		LangCode: "en-us",
-		Theme:    "hugo-theme-learn",
+		Theme:    []string{"hugo-theme-learn"},
 		Outputs:  oc,
 		Params:   pc,
 	}
 	hc.WriteConfig("./test_write_config.toml")
 }
-
-
