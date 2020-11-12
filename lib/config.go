@@ -8,10 +8,10 @@ import (
 )
 
 type HugoConfig struct {
-	Title    string `toml:"title"`
-	LangCode string `toml:"languageCode"`
-	BaseURL  string `toml:"baseURL"`
-	Theme    string `toml:"theme"`
+	Title    string   `toml:"title"`
+	LangCode string   `toml:"languageCode"`
+	BaseURL  string   `toml:"baseURL"`
+	Theme    []string `toml:"theme"`
 	Outputs  OutConfig
 	Params   ParaConfig
 }
@@ -34,14 +34,14 @@ func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 	pc := ParaConfig{
 		Author:           "Christian Kniep",
 		Description:      w.Description,
-		ShowVisitedLinks: false,
+		ShowVisitedLinks: true,
 		EditURL:          "https://github.com",
 	}
 	hc = HugoConfig{
 		Title:    w.Title,
 		BaseURL:  "https://example.org",
 		LangCode: "en-us",
-		Theme:    "learn",
+		Theme:    []string{"video", "learn"},
 		Outputs:  oc,
 		Params:   pc,
 	}
