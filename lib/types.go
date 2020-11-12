@@ -32,9 +32,11 @@ type BaseMeta struct {
 * BaseMeta Update MD files
  */
 func (bm *BaseMeta) ChapIndexWalker(tpath string, info os.FileInfo, err error) error {
+	log.Printf("ChapIndexWalker(tpath=%s) // BM: %v", tpath, bm)
 	switch {
 	case info.IsDir():
-		return nil
+		log.Printf("SKIP: %s", tpath)
+		return filepath.SkipDir
 	default:
 		match, _ := regexp.MatchString(`_index.*\.md$`, info.Name())
 		if match {
@@ -59,11 +61,40 @@ func (bm *BaseMeta) ChapIndexWalker(tpath string, info os.FileInfo, err error) e
 	return nil
 }
 
+func (bm *BaseMeta) FileIndexWalker(root string, files []os.FileInfo) error {
+	for _, file := range files {
+		fpath := path.Join(root, file.Name())
+		match, _ := regexp.MatchString(`_index.*\.md$`, file.Name())
+		if match {
+			c := Checker{}
+			log.Printf("c.ReadMeta(%s)", fpath)
+			err := c.ReadMeta(fpath)
+			if err != nil {
+				return err
+			}
+			err = c.UpdateMeta(*bm)
+			if err != nil {
+				log.Println(err.Error())
+				return err
+			}
+			err = c.ReplaceHeader(fpath)
+			if err != nil {
+				log.Println(err.Error())
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
 // UpdateIndex takes a directory and finds `_index\*.md` files to update
 // Skipping subdirs
 func (bm *BaseMeta) UpdateIndex(tpath string) (err error) {
 	log.Printf(">>> Walking %s", tpath)
-	err = filepath.Walk(tpath, bm.ChapIndexWalker)
+	files, err := ioutil.ReadDir(tpath)
+	bm.FileIndexWalker(tpath, files)
+	//err = filepath.Walk(tpath, bm.ChapIndexWalker)
 	return
 }
 
@@ -96,6 +127,81 @@ func (bm *BaseMeta) UpdateDict(md mType) (err error, res mType) {
 	return
 }
 
+/*****************
+-> Subsub
+Pages under the subchapter that are l3 section (have an _index.md)
+But within the menue they are at the same all align underneath the subchapter
+I. Chapter     (/content/chap1/index.md)
+  1. Subchap   (/content/chap1/sub1/_index.md)
+    a. Subsub  (/content/chap1/sub1/suba.md || /content/chap1/sub1/suba/_index.md)
+To make rearrangement easier, we'll use the latter
+*****************/
+type Subsub struct {
+	Title      string   `yaml:"title"`
+	Path       string   `yaml:"path"`
+	Source     string   `yaml:"source"`
+	Prefix     []string `yaml:"prefix"`
+	Weight     int      `yaml:"weight"`
+	IncludeTOC bool     `yaml:"include_toc"`
+	Enum       string   `yaml:"enum"`
+}
+
+// CreateSubchapter returns a subchapter
+func CreateSubsub(t, p, s, e string, w int, pre []string) (res Subsub) {
+	res.Title = t
+	res.Path = p
+	res.Source = s
+	res.Enum = e
+	res.Weight = w
+	res.Prefix = pre
+	return res
+}
+
+func (s *Subsub) ToBaseMeta() BaseMeta {
+	return BaseMeta{
+		Title:      s.Title,
+		Weight:     s.Weight,
+		Chapter:    false,
+		Pre:        s.Enum,
+		IncludeTOC: s.IncludeTOC,
+	}
+}
+func (s *Subsub) GetTitle() string {
+	return s.Title
+}
+
+func (s *Subsub) CompareSubchap(s2 Subsub) (err error, fails []string) {
+	if s.Path != s2.Path {
+		fails = append(fails, fmt.Sprintf("Path: '%s' != '%s'", s.Path, s2.Source))
+	}
+	if s.Source != s2.Source {
+		fails = append(fails, fmt.Sprintf("Source: '%s' != '%s'", s.Source, s2.Source))
+	}
+	/*
+		// TODO: Might need to compare booth string slices
+		if s.Prefix != s2.Prefix {
+			fails = append(fails, fmt.Sprintf("Prefix: '%s' != '%s'", s.Prefix, s2.Prefix))
+		}
+	*/
+	if s.Title != s2.Title {
+		fails = append(fails, fmt.Sprintf("Title: '%s' != '%s'", s.Title, s2.Title))
+	}
+	if s.Weight != s2.Weight {
+		fails = append(fails, fmt.Sprintf("Weight: '%d' != '%d'", s.Weight, s2.Weight))
+	}
+	if s.Enum != s2.Enum {
+		fails = append(fails, fmt.Sprintf("Enum: '%s' != '%s'", s.Enum, s2.Enum))
+	}
+	if len(fails) > 0 {
+		return fmt.Errorf(strings.Join(fails, "\n")), fails
+	}
+	return nil, fails
+}
+
+/***************
+-> Subchap
+
+***************/
 type Subchapter struct {
 	Title      string   `yaml:"title"`
 	Path       string   `yaml:"path"`
@@ -104,6 +210,7 @@ type Subchapter struct {
 	Weight     int      `yaml:"weight"`
 	IncludeTOC bool     `yaml:"include_toc"`
 	Enum       string   `yaml:"enum"`
+	Subsub     []Subsub `yaml:"subsub"`
 }
 
 func (s *Subchapter) ToBaseMeta() BaseMeta {
@@ -117,13 +224,13 @@ func (s *Subchapter) ToBaseMeta() BaseMeta {
 }
 
 // CreateSubchapter returns a subchapter
-func CreateSubchapter(t, p, s, e string, w int, pre []string) (res Subchapter) {
+func CreateSubchapter(t, p, s, e string, w int, subs []Subsub) (res Subchapter) {
 	res.Title = t
 	res.Path = p
 	res.Source = s
 	res.Enum = e
 	res.Weight = w
-	res.Prefix = pre
+	res.Subsub = subs
 	return res
 }
 
@@ -368,7 +475,7 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 		log.Printf(err.Error())
 		return
 	}
-	// WOrkshop Base FIles
+	// Workshop Base FIles
 	srcContent := path.Join(w.Source, "content")
 	log.Printf("Check if '%s' exists", srcContent)
 	if _, er := os.Stat(srcContent); os.IsNotExist(er) {
@@ -468,6 +575,39 @@ func (w *Workshop) GenerateHugo(t string) (err error, res []string) {
 			}
 			bm = sub.ToBaseMeta()
 			bm.UpdateIndex(path.Join(t, "content", chap.Path, sub.Path, ""))
+			for _, subsub := range sub.Subsub {
+				if _, er := os.Stat(path.Join(subsub.Source, "content")); os.IsNotExist(er) {
+					targetContentPath := fmt.Sprintf("%s/content/%s/%s/%s", t, chap.Path, sub.Path, subsub.Path)
+					msg := fmt.Sprintf("cp -r %s %s", subsub.Source, targetContentPath)
+					res = append(res, msg)
+					err = CopyDir(subsub.Source, targetContentPath)
+					if err != nil {
+						log.Println(err.Error())
+						return
+					}
+				} else {
+					srcContentPath := fmt.Sprintf("%s/content", subsub.Source)
+					targetContentPath := fmt.Sprintf("%s/content/%s/%s/%s", t, chap.Path, sub.Path, subsub.Path)
+					res = append(res, fmt.Sprintf("cp -r %s %s", srcContentPath, targetContentPath))
+					err = CopyDir(srcContentPath, targetContentPath)
+					if err != nil {
+						log.Println(err.Error())
+						return
+					}
+					srcStaticPath := fmt.Sprintf("%s/static", subsub.Source)
+					targetStaticPath := fmt.Sprintf("%s/static", t)
+					res = append(res, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
+					err = CopyDir(srcStaticPath, targetStaticPath)
+					if err != nil {
+						log.Println(err.Error())
+						return
+					}
+				}
+				bm = subsub.ToBaseMeta()
+				upath := path.Join(t, "content", chap.Path, sub.Path, subsub.Path)
+				log.Printf("UpdateIndex(%s)", upath)
+				bm.UpdateIndex(upath)
+			}
 		}
 	}
 	return
@@ -478,9 +618,9 @@ Test Objects
 ***********/
 
 // TestObj
-var testC1sub1 = CreateSubchapter("Chap1Sub1", "sub1", "../misc/test/sub1", "1. ", 10, []string{})
-var testC1sub2 = CreateSubchapter("Chap1Sub2", "sub2", "../misc/test/sub2", "2. ", 20, []string{})
-var testC2sub1 = CreateSubchapter("Chap2Sub1", "sub1", "../misc/test/sub3", "1. ", 10, []string{})
+var testC1sub1 = CreateSubchapter("Chap1Sub1", "sub1", "../misc/test/sub1", "1. ", 10, []Subsub{})
+var testC1sub2 = CreateSubchapter("Chap1Sub2", "sub2", "../misc/test/sub2", "2. ", 20, []Subsub{})
+var testC2sub1 = CreateSubchapter("Chap2Sub1", "sub1", "../misc/test/sub3", "1. ", 10, []Subsub{})
 var testChap1 = CreateChapter("Chapter1", "chap1", "../misc/test/chap1", "I. ", 10, []string{},
 	[]Subchapter{testC1sub1, testC1sub2})
 var testChap2 = CreateChapter("Chapter2", "chap2", "../misc/test/chap2", "II. ", 20, []string{},

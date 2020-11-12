@@ -58,7 +58,7 @@ func TestParseData2(t *testing.T) {
 
 func TestCompateSubchap(t *testing.T) {
 	s := CreateSubchapter(
-		"Chap1Sub1", "sub1", "../misc/test/sub1", "1. ", 10, []string{},
+		"Chap1Sub1", "sub1", "../misc/test/sub1", "1. ", 10, []Subsub{},
 	)
 	err, _ := s.CompareSubchap(testC1sub1)
 	if err != nil {
@@ -191,6 +191,12 @@ func TestGenerateHugo(t *testing.T) {
 	log.Printf("TempDir: %s", tdir)
 	_, res := w.GenerateHugo(tdir)
 	fmt.Printf(strings.Join(res, "\n"))
+	for _, cpath := range []string{"content/chap1/sub2/extA/_index.md"} {
+		if _, err := os.Stat(path.Join(tdir, cpath)); os.IsNotExist(err) {
+			t.Errorf("Path '%s' should exist after creating Hug in '%s'", cpath, tdir)
+			return
+		}
+	}
 	err := os.RemoveAll(tdir)
 	if err != nil {
 		log.Fatal(err)

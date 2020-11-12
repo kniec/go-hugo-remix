@@ -22,6 +22,13 @@ chaps:
         title: Chap1Sub2
         weight: 20
         enum: "2. "
+        subsub: 
+          - c1sub1extA:
+            path: extA
+            source: ../misc/test/sub4
+            title: Chap1Sub2ExtA
+            weight: 10
+            enum: "a. "
   - chapter2: 
     path: chap2
     source: ../misc/test/chap2

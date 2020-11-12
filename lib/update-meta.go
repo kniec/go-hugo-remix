@@ -95,10 +95,7 @@ func (c *Checker) ReadMeta(fpath string) (err error) {
 
 // UpdateMeta update the file metadata (c.Meta) with what comes from the workshop.yaml
 func (c *Checker) UpdateMeta(bm BaseMeta) (err error) {
-	// TODO: that's the place to follow up
-	log.Printf("UpdateMeta.Before: %v+", c.Meta)
 	err, c.Meta = bm.UpdateDict(c.Meta)
-	log.Printf("UpdateMeta.After: %v+", c.Meta)
 	return
 }
 
@@ -114,12 +111,9 @@ func (c *Checker) ReplaceHeader(fpath string) (err error) {
 	// c.Meta is what is read from the file
 	source, err := ioutil.ReadFile(fpath)
 	inputLines := strings.Split(string(source), "\n")
-	log.Printf("inputLines: %v", inputLines)
 	metaLines := c.ToMetaLines()
-	log.Printf("ToMetaLines: %v", metaLines)
 
 	err, outputLines := updateMetaLines(inputLines, metaLines)
-	log.Printf("outputLines: %v", outputLines)
 	if err != nil {
 		log.Fatalln(err)
 	}
