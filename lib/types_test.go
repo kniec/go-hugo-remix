@@ -58,7 +58,7 @@ func TestParseData2(t *testing.T) {
 
 func TestCompateSubchap(t *testing.T) {
 	s := CreateSubchapter(
-		"Chap1Sub1", "sub1", "../misc/test/sub1", "1. ", 10, []Subsub{},
+		"Chap1Sub1", "sub1", "./test/sub1", "1. ", 10, []Subsub{},
 	)
 	err, _ := s.CompareSubchap(testC1sub1)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestCompateChap1(t *testing.T) {
 	c1sub1 := Subchapter{
 		Title:  "Chap1Sub1",
 		Path:   "sub1",
-		Source: "../misc/test/sub1",
+		Source: "./test/sub1",
 		Prefix: []string{},
 		Weight: 10,
 		Enum:   "1. ",
@@ -78,7 +78,7 @@ func TestCompateChap1(t *testing.T) {
 	c1sub2 := Subchapter{
 		Title:  "Chap1Sub2",
 		Path:   "sub2",
-		Source: "../misc/test/sub2",
+		Source: "./test/sub2",
 		Prefix: []string{},
 		Weight: 20,
 		Enum:   "2. ",
@@ -86,7 +86,7 @@ func TestCompateChap1(t *testing.T) {
 	c1 := Chapter{}
 	c1.Title = "Chapter1"
 	c1.Path = "chap1"
-	c1.Source = "../misc/test/chap1"
+	c1.Source = "./test/chap1"
 	c1.Prefix = []string{}
 	c1.Weight = 10
 	c1.Enum = "I. "
@@ -98,7 +98,7 @@ func TestCompateChap1(t *testing.T) {
 }
 
 func TestCreateWorkshop(t *testing.T) {
-	w := CreateWorkshop("Title", "Description", "../misc/hugo", "../misc/test/workshop1", []Chapter{})
+	w := CreateWorkshop("Title", "Description", "../misc/hugo", "./test/workshop1", []Chapter{})
 	if w.Title != "Title" && len(w.Chaps) == 0 {
 		t.Errorf("Title should be 'Title' w/o chapters")
 	}
@@ -116,10 +116,10 @@ func TestParseDate_TitleBase(t *testing.T) {
 		log.Printf("%v+", w)
 		t.Errorf("workshop.Title should be '%s', was '%s'", exp, w.GetTitle())
 	}
-	exp = "../misc/hugo"
-	if w.BaseURL != exp {
+	exp = "./hugo"
+	if w.HugoBase != exp {
 		log.Printf("%v+", w)
-		t.Errorf("workshop.BaseURL should be '%s', was '%s'", exp, w.BaseURL)
+		t.Errorf("workshop.HugoBase should be '%s', was '%s'", exp, w.HugoBase)
 	}
 }
 
@@ -193,7 +193,7 @@ func TestGenerateHugo(t *testing.T) {
 	fmt.Printf(strings.Join(res, "\n"))
 	for _, cpath := range []string{"content/chap1/sub2/extA/_index.md"} {
 		if _, err := os.Stat(path.Join(tdir, cpath)); os.IsNotExist(err) {
-			t.Errorf("Path '%s' should exist after creating Hug in '%s'", cpath, tdir)
+			t.Errorf("Path '%s' should exist after creating Hugo in '%s'", cpath, tdir)
 			return
 		}
 	}

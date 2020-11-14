@@ -1,44 +1,44 @@
 title: Workshop1
 description: "Workshop description"
-baseurl: ../misc/hugo
-source: ../misc/test/workshop1
+base: ./hugo
+source: ./test/workshop1
 chaps:
   - chapter1: 
     path: chap1
-    source: ../misc/test/chap1
+    source: ./test/chap1
     title: Chapter1
     weight: 10
     enum: "I. "
     subchap: 
       - c1sub1: 
         path: sub1
-        source: ../misc/test/sub1
+        source: ./test/sub1
         title: Chap1Sub1
         weight: 10
         enum: "1. "
       - c1sub2: 
         path: sub2
-        source: ../misc/test/sub2
+        source: ./test/sub2
         title: Chap1Sub2
         weight: 20
         enum: "2. "
         subsub: 
           - c1sub1extA:
             path: extA
-            source: ../misc/test/sub4
+            source: ./test/sub4
             title: Chap1Sub2ExtA
             weight: 10
             enum: "a. "
   - chapter2: 
     path: chap2
-    source: ../misc/test/chap2
+    source: ./test/chap2
     title: Chapter2
     weight: 20
     enum: "II. "
     subchap: 
       - c2sub1: 
         path: sub1
-        source: ../misc/test/sub3
+        source: ./test/sub3
         title: Chap2Sub1
         weight: 10
         enum: "1. "
