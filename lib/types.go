@@ -344,9 +344,11 @@ func (c *Chapter) CompareChap(c2 Chapter) (err error, fails []string) {
 
 // Workshop references a workshop with all its metadata
 type Workshop struct {
-	Title       string `yaml:"title"`
-	Description string `yaml:"description"`
-	BaseURL     string `yaml:"baseurl"`
+	Title       string   `yaml:"title"`
+	Description string   `yaml:"description"`
+	DstDir      string   // DstDir is used when copying files to store the destination
+	BaseURL     string   `yaml:"baseurl"`
+	Flavours    []string `yaml:"flavours`
 	BaseDir     string
 	// HugoBase path to copy from
 	// Switch to embed hugo files later
@@ -457,6 +459,23 @@ func (w *Workshop) WriteHugoConfig(tpath string) (err error) {
 	err, hc := CreateHugoConfigFromWorkshop(*w)
 	hc.WriteConfig(path.Join(tpath, "config.toml"))
 	return
+}
+
+//
+///// CopyDirWalk copies files and directories
+func (w *Workshop) CopyDirWalk(src, dst string) (err error) {
+	w.DstDir = dst
+	err = filepath.Walk(src, w.WalkCopy)
+	return
+}
+
+///// WalkCopy takes multi-flavor (language) into account
+// by extending md-files sufix (_index.md -> {_index.oyo.md, _index.ee.md})
+// and 'files' folders (_index.files -> {_index.oyo.files, _index.ee.files})
+//// BUT when a folder already has a language sufix, it should not be duplicated
+// -> this means that the author explicitly want it to be only for the language in question
+func (w *Workshop) WalkCopy(path string, info os.FileInfo, err error) error {
+	return nil
 }
 
 // GenerateHugo iterates over Chapter and Subchapters and copies the base, chapters and subchapters

@@ -2,6 +2,7 @@ title: Workshop1
 description: "Workshop description"
 base: ./hugo
 source: ./test/workshop1
+flavours: ["eng", "rse", "sys"]
 chaps:
   - chapter1: 
     path: chap1

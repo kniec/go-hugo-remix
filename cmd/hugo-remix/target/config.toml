@@ -2,3 +2,22 @@ baseURL = "http://example.org/"
 languageCode = "en-us"
 title = "My New Hugo Site"
 theme = "hugo-theme-learn"
+defaultContentLanguage = "eng"
+
+
+[Languages]
+[Languages.eng]
+title = "Engineer/Scientist persona: Focused on application/workload"
+weight = 1
+languageName = "Engineer/Scientist"
+
+[Languages.rse]
+title = "Research Software Engineer: Research Sysops hybrid"
+weight = 2
+languageName = "Research Software Engineer"
+
+[Languages.sys]
+title = "SysOps: System Admin focused on the Infrastructure Setup"
+weight = 3
+languageName = "SysOps"
+

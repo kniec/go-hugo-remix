@@ -1,11 +1,10 @@
 package redux
 
 import (
-	"strings"
 	"log"
+	"strings"
 
 	cp "github.com/otiai10/copy"
-
 )
 
 // CopyDir moves over the dir and skips git dirs
