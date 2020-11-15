@@ -10,13 +10,15 @@ import (
 )
 
 type HugoConfig struct {
-	Title     string   `toml:"title"`
-	LangCode  string   `toml:"languageCode"`
-	BaseURL   string   `toml:"baseURL"`
-	Theme     []string `toml:"theme"`
-	Outputs   OutConfig
-	Params    ParaConfig
-	Languages map[string]Language `toml:"languages"`
+	Title        string   `toml:"title"`
+	LangCode     string   `toml:"languageCode"`
+	BaseURL      string   `toml:"baseURL"`
+	Theme        []string `toml:"theme"`
+	Outputs      OutConfig
+	Params       ParaConfig
+	Languages    map[string]Language `toml:"languages"`
+	DefLangInSub bool                `toml:"defaultContentLanguageInSubdir"`
+	DefContLang  string              `toml:"defaultContentLanguage"`
 }
 
 type OutConfig struct {
@@ -35,24 +37,6 @@ type Language struct {
 	Weight       int    `toml:"weight"`
 	LanguageName string `toml:"languageName"`
 }
-
-/*
-[Languages]
-[Languages.eng]
-title = "Scientist soley focused on the application/workload"
-weight = 1
-languageName = "Engineer/Scientist"
-
-[Languages.rse]
-title = "Research Software Engineer: Research Sysops hybrid"
-weight = 2
-languageName = "RSE"
-
-[Languages.sys]
-title = "System Admin focused on the Infrastructure Setup"
-weight = 3
-languageName = "SysOps"
-*/
 
 var defFlavourMap = map[string]Language{
 	"eng": Language{
@@ -83,15 +67,18 @@ func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 		EditURL:          "https://github.com",
 	}
 	hc = HugoConfig{
-		Title:     w.Title,
-		BaseURL:   "https://example.org",
-		LangCode:  "en-us",
-		Theme:     []string{"video", "learn"},
-		Outputs:   oc,
-		Params:    pc,
-		Languages: map[string]Language{},
+		Title:        w.Title,
+		BaseURL:      "https://example.org",
+		LangCode:     "en-us",
+		Theme:        []string{"video", "learn"},
+		Outputs:      oc,
+		Params:       pc,
+		Languages:    map[string]Language{},
+		DefLangInSub: false,
+		DefContLang:  "eng",
 	}
 	for _, flav := range w.Flavours {
+		log.Printf("## Flavor: %s", flav)
 		if val, ok := defFlavourMap[flav]; ok {
 			hc.Languages[flav] = val
 		} else {

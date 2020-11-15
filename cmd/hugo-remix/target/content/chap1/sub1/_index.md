@@ -1,6 +1,8 @@
 ---
-title: "Sub1"
+title: "Chap1Sub1"
 weight: 10
-pre: "<b>1. </b>"
+chapter: false
+pre: "1. "
+include_toc: false
 ---
 

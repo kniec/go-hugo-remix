@@ -1,4 +1,5 @@
 title: Workshop1
+author: "Christian Kniep"
 description: "Workshop description"
 base: ./hugo
 source: ./test/workshop1

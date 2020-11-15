@@ -345,6 +345,7 @@ func (c *Chapter) CompareChap(c2 Chapter) (err error, fails []string) {
 // Workshop references a workshop with all its metadata
 type Workshop struct {
 	Title       string   `yaml:"title"`
+	Author      string   `yaml:"author"`
 	Description string   `yaml:"description"`
 	DstDir      string   // DstDir is used when copying files to store the destination
 	BaseURL     string   `yaml:"baseurl"`

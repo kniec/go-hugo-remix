@@ -1,6 +1,8 @@
-+++
-title = "Sub3"
-weight = 30
-pre = "<b>3. </b>"
-+++
+---
+title: "Chap2Sub1"
+weight: 10
+chapter: false
+pre: "1. "
+include_toc: false
+---
 

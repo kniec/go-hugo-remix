@@ -185,10 +185,7 @@ func Test_ExtendFromWorkshop(t *testing.T) {
 // TestGenerateHugo will take the test.yaml and generate the hugo workshop
 func TestGenerateHugo(t *testing.T) {
 	_, w := CreateWorkshopFromFile("../misc/test.yaml")
-	log.Printf("w.Chaps[0]:")
-	fmt.Println(w.Chaps[0].String())
 	tdir, _ := ioutil.TempDir(os.TempDir(), "hugo-")
-	log.Printf("TempDir: %s", tdir)
 	_, res := w.GenerateHugo(tdir)
 	fmt.Printf(strings.Join(res, "\n"))
 	for _, cpath := range []string{"content/chap1/sub2/extA/_index.md"} {
@@ -197,9 +194,13 @@ func TestGenerateHugo(t *testing.T) {
 			return
 		}
 	}
-	err := os.RemoveAll(tdir)
-	if err != nil {
-		log.Fatal(err)
+	if false {
+		log.Printf("TempDir: %s", tdir)
+	} else {
+		err := os.RemoveAll(tdir)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

@@ -1,4 +1,5 @@
 title: Workshop2
+author: "John Doe"
 description: "Workshop1 extended with Chapter3"
 base: ./hugo
 base-workshop: ./test.yaml
