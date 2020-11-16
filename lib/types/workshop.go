@@ -78,18 +78,6 @@ func (w *Workshop) ExtendFromWorkshop(w2 Workshop) (err error) {
 }
 
 func (self *Workshop) Compare(other Workshop) (err error, fails []string) {
-	/*
-		Title        string   `yaml:"title"`
-		Author       string   `yaml:"author"`
-		Description  string   `yaml:"description"`
-		BaseURL      string   `yaml:"baseurl"`
-		Flavours     []string `yaml:"flavours"`
-		BaseDir      string
-		HugoBase     string    `yaml:"base"`          // Switch to embed hugo files later
-		BaseWorkshop string    `yaml:"base-workshop"` // YAML file to extend workshop with
-		Source       string    `yaml:"source"`        // source is the content of the base-url
-		DstDir       string    // DstDir is used when copying files to store the destination
-	*/
 	fails = compVal(self.Title, other.Title, fails)
 	fails = compVal(self.Author, other.Author, fails)
 	fails = compVal(self.Description, other.Description, fails)

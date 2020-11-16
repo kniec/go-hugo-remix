@@ -1,4 +1,4 @@
-package config
+package types
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/qnib/go-hugo-remix/types"
 )
 
 type HugoConfig struct {
@@ -57,7 +56,7 @@ var defFlavourMap = map[string]Language{
 	},
 }
 
-func CreateHugoConfigFromWorkshop(w types.Workshop) (err error, hc HugoConfig) {
+func CreateHugoConfigFromWorkshop(w Workshop) (err error, hc HugoConfig) {
 	oc := OutConfig{
 		Home: []string{"HTML", "RSS", "JSON"},
 	}
