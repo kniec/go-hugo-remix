@@ -123,15 +123,6 @@ func TestParseDate_TitleBase(t *testing.T) {
 	}
 }
 
-func TestParseFile_Title(t *testing.T) {
-	_, w := CreateWorkshopFromFile("../misc/test.yaml")
-	exp := "Workshop1"
-	if w.GetTitle() != exp {
-		log.Printf("%v+", w)
-		t.Errorf("workshop.Title should be '%s', was '%s'", exp, w.GetTitle())
-	}
-}
-
 func TestParseFile_EqualTestYAML(t *testing.T) {
 	yData, err := readFile("../misc/test.yaml")
 	if err != nil {

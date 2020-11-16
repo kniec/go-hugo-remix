@@ -1,0 +1,27 @@
+title: Workshop1
+author: "Christian Kniep"
+description: "Workshop description"
+base: ./hugo
+source: ./test/workshop1
+flavours: ["eng", "rse", "sys"]
+chaps:
+  - chapter1: 
+    path: chap1
+    source: ./test/chap1
+    title: Chapter1
+    weight: 10
+    enum: "I. "
+    subchaps: 
+      - c1sub1: 
+        path: sub1
+        source: ./test/sub1
+        title: Chap1Sub1
+        weight: 10
+        enum: "1. "
+        subsubs: 
+          - c1sub1extA:
+            path: extA
+            source: ./test/sub4
+            title: Chap1Sub1ExtA
+            weight: 10
+            enum: "a. "

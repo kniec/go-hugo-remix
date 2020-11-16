@@ -1,5 +1,10 @@
 package types
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Base holds the common variables
 type Base struct {
 	Title      string `yaml:"title"`
@@ -10,6 +15,22 @@ type Base struct {
 	Enum       string `yaml:"enum"`
 	Author     string
 	Flavour    string
+}
+
+// Compare checks each value to be equal
+func (self *Base) Compare(other Base) (err error, fails []string) {
+	fails = compVal(self.Title, other.Title, fails)
+	fails = compVal(self.Path, other.Path, fails)
+	fails = compVal(self.Source, other.Source, fails)
+	fails = compVal(self.Weight, other.Weight, fails)
+	fails = compVal(self.IncludeTOC, other.IncludeTOC, fails)
+	fails = compVal(self.Enum, other.Enum, fails)
+	fails = compVal(self.Author, other.Author, fails)
+	fails = compVal(self.Flavour, other.Flavour, fails)
+	if len(fails) > 0 {
+		err = fmt.Errorf(strings.Join(fails, "\n"))
+	}
+	return
 }
 
 // CreateBase returns a filled Base
@@ -23,68 +44,4 @@ func CreateBase(t, p, s, e string, w int) Base {
 		Flavour: "eng",
 	}
 	return b
-}
-
-// Chapter is the highest level content
-// Chapter -> Subchap -> Subsub
-type Chapter struct {
-	Base
-	Subchap []Subchapter
-}
-
-// CreateChapter build a chapter
-func CreateChapter(t, p, s, e string, w int, sub []Subchapter) Chapter {
-	b := CreateBase(t, p, s, e, w)
-	res := Chapter{
-		Base:    b,
-		Subchap: sub,
-	}
-	return res
-}
-
-// Subchapter is the mid-level content
-// Chapter -> Subchap -> Subsub
-type Subchapter struct {
-	Base
-	Subsub []Subsub
-}
-
-// CreateSubchap build a Subchapter
-func CreateSubchapter(t, p, s, e string, w int, subsub []Subsub) Subchapter {
-	b := CreateBase(t, p, s, e, w)
-	res := Subchapter{
-		Base:   b,
-		Subsub: subsub,
-	}
-	return res
-}
-
-// Subsub is the lowest level content
-// Chapter -> Subchap -> Subsub
-type Subsub struct {
-	Base
-}
-
-// CreateSubsub build a Subsub
-func CreateSubsub(t, p, s, e string, w int) Subsub {
-	b := CreateBase(t, p, s, e, w)
-	res := Subsub{
-		Base: b,
-	}
-	return res
-}
-
-// Workshop provides the meta-data for a workshop and chapters
-type Workshop struct {
-	Title        string   `yaml:"title"`
-	Author       string   `yaml:"author"`
-	Description  string   `yaml:"description"`
-	BaseURL      string   `yaml:"baseurl"`
-	Flavours     []string `yaml:"flavours"`
-	BaseDir      string
-	HugoBase     string `yaml:"base"`          // Switch to embed hugo files later
-	BaseWorkshop string `yaml:"base-workshop"` // YAML file to extend workshop with
-	Source       string `yaml:"source"`        // source is the content of the base-url
-	DstDir       string // DstDir is used when copying files to store the destination
-	Chaps        []Chapter
 }
