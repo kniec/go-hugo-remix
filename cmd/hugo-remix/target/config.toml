@@ -15,3 +15,15 @@ defaultContentLanguage = "eng"
   editURL = "https://github.com"
 
 [languages]
+  [languages.eng]
+    title = "Scientist soley focused on the application/workload"
+    weight = 1
+    languageName = "Researcher"
+  [languages.rse]
+    title = "Research Software Engineer: Research Sysops hybrid"
+    weight = 2
+    languageName = "RSE"
+  [languages.sys]
+    title = "System Admin focused on the infrastructure setup"
+    weight = 3
+    languageName = "SysOps"

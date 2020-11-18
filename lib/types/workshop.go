@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -14,17 +15,18 @@ import (
 
 // Workshop provides the meta-data for a workshop and chapters
 type Workshop struct {
-	Title        string   `yaml:"title"`
-	Author       string   `yaml:"author"`
-	Description  string   `yaml:"description"`
-	BaseURL      string   `yaml:"baseurl"`
-	Flavours     []string `yaml:"flavours"`
-	BaseDir      string
+	Title        string    `yaml:"title"`
+	Author       string    `yaml:"author"`
+	Description  string    `yaml:"description"`
+	BaseURL      string    `yaml:"baseurl"`
+	Flavours     []string  `yaml:"flavours"`
+	BaseDir      string    // Path from which all relative path are originating (PWD of YAML file most likely)
 	HugoBase     string    `yaml:"base"`          // Switch to embed hugo files later
 	BaseWorkshop string    `yaml:"base-workshop"` // YAML file to extend workshop with
 	Source       string    `yaml:"source"`        // source is the content of the base-url
 	DstDir       string    // DstDir is used when copying files to store the destination
 	Chaps        []Chapter `yaml:"chaps"`
+	dLevel       int
 }
 
 // Parse takes a byte array and parses it
@@ -52,6 +54,13 @@ func CreateWorkshopFromFile(fpath string) (err error, w Workshop) {
 		w.ExtendFromWorkshop(wExt)
 	}
 	return
+}
+
+func (w *Workshop) SetDebugLevel(l int) {
+	w.dLevel = l
+}
+func (w *Workshop) GetDebugLevel() (l int) {
+	return w.dLevel
 }
 
 // ExtendFromWorkshop takes w2 and extends w with it's chapters (authors)
@@ -122,4 +131,71 @@ func (w *Workshop) WriteHugoConfig(tpath string) (err error) {
 	err, hc := CreateHugoConfigFromWorkshop(*w)
 	hc.WriteConfig(path.Join(tpath, "config.toml"))
 	return
+}
+
+func (w *Workshop) CopyHugoBase(base, target string) (err error) {
+	msg := fmt.Sprintf("cp -r %s/%s/* %s/", base, w.HugoBase, target)
+	log.Printf(msg)
+	err = CopyDir(path.Join(base, w.HugoBase), target)
+	if err != nil {
+		log.Printf(err.Error())
+
+	}
+	return
+}
+
+// GenerateHugo iterates over Chapter and Subchapters and copies the base, chapters and subchapters
+// into a target directory
+func (w *Workshop) GenerateHugo(target string) (err error, res []string) {
+	log.Printf("GenerateHugo: %s", target)
+	err = os.MkdirAll(target, 0755)
+	if err != nil {
+		log.Printf(err.Error())
+		return
+	}
+	err = w.CopyHugoBase(w.BaseDir, target)
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
+	err = w.CopyWorkshopContent(target)
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
+	for _, chap := range w.Chaps {
+		chap.SetDebugLevel(w.GetDebugLevel())
+		tPath := []string{target, "content", chap.Path}
+		err = chap.CopyContent(w.BaseDir, tPath)
+		if err != nil {
+			log.Print(err.Error())
+			return
+		}
+		for _, sub := range chap.Subchaps {
+			sub.SetDebugLevel(w.GetDebugLevel())
+			targetSub := append(tPath, sub.Path)
+			err = sub.CopyContent(w.BaseDir, targetSub)
+			if err != nil {
+				log.Print(err.Error())
+				return
+			}
+			for _, subsub := range sub.Subsubs {
+				subsub.SetDebugLevel(w.GetDebugLevel())
+				targetSubsub := append(targetSub, subsub.Path)
+				err := subsub.CopyContent(w.BaseDir, targetSubsub)
+				if err != nil {
+					log.Print(err.Error())
+				}
+			}
+		}
+	}
+	return
+}
+
+func (w *Workshop) CopyWorkshopContent(target string) (err error) {
+	b := Base{
+		Source: w.Source,
+		Path:   ".",
+	}
+	return b.CopyContent(w.BaseDir, []string{target})
 }

@@ -2,12 +2,14 @@ package types
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
 // Chapter is the highest level content
 // Chapter -> Subchap -> Subsub
 type Chapter struct {
+	Base
 	Title      string `yaml:"title"`
 	Path       string `yaml:"path"`
 	Source     string `yaml:"source"`
@@ -22,7 +24,19 @@ type Chapter struct {
 // CreateChapter build a chapter
 func CreateChapter(t, p, s, e string, w int, sub []Subchapter) Chapter {
 	//b := CreateBase(t, p, s, e, w)
+	var m map[string]interface{}
+	m["title"] = ""
+	m["weight"] = 0
+	m["chapter"] = false
+	m["pre"] = ""
+	m["include_toc"] = false
+	b := Base{
+		dLevel: 0,
+		Meta:   m,
+	}
+
 	res := Chapter{
+		Base:     b,
 		Title:    t,
 		Path:     p,
 		Source:   s,
@@ -95,5 +109,43 @@ func (self *Chapter) String() (res []string) {
 	for _, schap := range self.Subchaps {
 		res = append(res, schap.String()...)
 	}
+	return
+}
+
+// SetDebugLevel passes the DebugLevel to Base
+func (self *Chapter) SetDebugLevel(l int) {
+	self.Base.SetDebugLevel(l)
+}
+
+func (self *Chapter) Debug(level int, msg string) {
+	self.Base.Debug(level, msg)
+}
+
+func (self *Chapter) Error(level int, msg string) {
+	self.Base.Error(level, msg)
+}
+
+func (self *Chapter) ToMetaLines() (res []string) {
+	res = append(res, fmt.Sprintf(`title: "%s"`, self.Title))
+	res = append(res, fmt.Sprintf("weight: %d", self.Weight))
+	res = append(res, fmt.Sprintf(`chapter: %t`, true))
+	res = append(res, fmt.Sprintf(`pre: "%s"`, self.Enum))
+	res = append(res, fmt.Sprintf(`include_toc: %t`, true))
+	return
+}
+
+// CopyContent
+func (self *Chapter) CopyContent(baseDir string, tPath []string) (err error) {
+	self.Base.Source = self.Source
+	self.Base.Path = self.Path
+	self.Base.Flavour = self.Flavour
+	err = self.Base.CopyContent(baseDir, tPath)
+	if err != nil {
+		self.Error(1, err.Error())
+		return
+	}
+	// Update _index.md after copying
+	mLines := self.ToMetaLines()
+	err = self.WalkContentDir(path.Join(tPath...), mLines)
 	return
 }

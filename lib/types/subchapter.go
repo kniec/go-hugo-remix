@@ -2,12 +2,14 @@ package types
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
 // Subchapter is the mid-level content
 // Chapter -> Subchap -> Subsub
 type Subchapter struct {
+	Base
 	Title      string `yaml:"title"`
 	Path       string `yaml:"path"`
 	Source     string `yaml:"source"`
@@ -22,6 +24,7 @@ type Subchapter struct {
 // CreateSubchap build a Subchapter
 func CreateSubchapter(t, p, s, e string, w int, subsub []Subsub) Subchapter {
 	res := Subchapter{
+		Base:    CreateBase(0),
 		Title:   t,
 		Path:    p,
 		Source:  s,
@@ -95,4 +98,34 @@ func (self *Subchapter) String() (res []string) {
 		res = append(res, ssub.String()...)
 	}
 	return
+}
+
+func (self *Subchapter) ToMetaLines() (res []string) {
+	res = append(res, fmt.Sprintf(`title: "%s"`, self.Title))
+	res = append(res, fmt.Sprintf("weight: %d", self.Weight))
+	res = append(res, fmt.Sprintf(`chapter: %t`, false))
+	res = append(res, fmt.Sprintf(`pre: "%s"`, self.Enum))
+	res = append(res, fmt.Sprintf(`include_toc: %t`, self.IncludeTOC))
+	return
+}
+
+// CopyContent
+func (self *Subchapter) CopyContent(baseDir string, tPath []string) (err error) {
+	self.Base.Source = self.Source
+	self.Base.Path = self.Path
+	self.Base.Flavour = self.Flavour
+	err = self.Base.CopyContent(baseDir, tPath)
+	if err != nil {
+		self.Error(1, err.Error())
+		return
+	}
+	// Update _index.md after copying
+	mLines := self.ToMetaLines()
+	err = self.WalkContentDir(path.Join(tPath...), mLines)
+	return
+}
+
+// SetDebugLevel passes the DebugLevel to Base
+func (self *Subchapter) SetDebugLevel(l int) {
+	self.Base.SetDebugLevel(l)
 }

@@ -2,6 +2,9 @@ package types
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"reflect"
 	"strings"
 	"testing"
@@ -38,6 +41,7 @@ func Test_CreateChapterDeepEqual(t *testing.T) {
 
 func Test_CreateChapter(t *testing.T) {
 	c1 := CreateChapter("Chapter1", "chap1", "./test/chap1", "I. ", 10, []Subchapter{C1s1, C1s2})
+	c1.SetDebugLevel(3)
 	fails := []string{}
 	if c1.Title != "Chapter1" {
 		fails = append(fails, fmt.Sprintf("Title >> Exp:'%s' // Got: '%s'", "Chapter1", c1.Title))
@@ -56,6 +60,45 @@ func Test_CreateChapter(t *testing.T) {
 	}
 	if len(fails) > 0 {
 		fmt.Printf(strings.Join(fails, "\n"))
+		t.Error()
+	}
+}
+
+func Test_CopyContent_SimpleChapter(t *testing.T) {
+	c1 := CreateChapter("Chapter1", "chap1", "./test/chap1", "I. ", 10, []Subchapter{})
+	c1.SetDebugLevel(3)
+	tdir, _ := ioutil.TempDir(os.TempDir(), "chap-")
+	fmt.Printf("CopyContent(., %s)\n  > Path: %s\n  > Source: %s\n", tdir, c1.Path, c1.Source)
+	c1.CopyContent("../../misc", []string{tdir})
+	// Check if path exists
+	for _, cpath := range []string{"content/chap2/_index.md"} {
+		if _, err := os.Stat(path.Join(tdir, cpath)); os.IsNotExist(err) {
+			t.Errorf("Path '%s' should exist after creating Hugo in '%s'", cpath, tdir)
+			return
+		}
+	}
+	err := os.RemoveAll(tdir)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Error()
+	}
+}
+
+func Test_CopyContent_StaticChapter(t *testing.T) {
+	c := CreateChapter("Chapter2", "chap2", "./test/chap2", "III. ", 30, []Subchapter{})
+	c.SetDebugLevel(3)
+	tdir, _ := ioutil.TempDir(os.TempDir(), "chap-")
+	c.CopyContent("../../misc", []string{tdir})
+	// Check if path exists
+	for _, cpath := range []string{"content/chap2/_index.md", "static/images/wikipedia.png"} {
+		if _, err := os.Stat(path.Join(tdir, cpath)); os.IsNotExist(err) {
+			t.Errorf("Path '%s' should exist after creating Hugo in '%s'", cpath, tdir)
+			return
+		}
+	}
+	err := os.RemoveAll(tdir)
+	if err != nil {
+		fmt.Println(err.Error())
 		t.Error()
 	}
 }

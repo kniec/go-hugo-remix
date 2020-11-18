@@ -1,14 +1,7 @@
 package types
 
 var (
-	B1 = Base{
-		Title:   "Workshop1",
-		Path:    ".",
-		Source:  "../../misc/test/workshop1",
-		Weight:  1,
-		Flavour: "eng",
-		Enum:    "I. ",
-	}
+	B1     = Base{}
 	C1s2eA = Subsub{
 		Title:   "Chap1Sub2ExtA",
 		Path:    "extA",

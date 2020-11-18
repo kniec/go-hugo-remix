@@ -1,8 +1,8 @@
 ---
-title: "Sub2"
-weight: 20
-pre: "<b>2. </b>"
+title: "Sub4"
+weight: 40
+pre: "<b>4. </b>"
 ---
 
 
-![](./images/wikipedia.png)
+![](/images/wikipedia.png)
