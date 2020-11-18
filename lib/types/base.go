@@ -74,9 +74,9 @@ func (self *Base) CopyContent(baseDir string, tPath []string) (err error) {
 			return
 		}
 		srcStaticPath := path.Join(baseDir, self.Source, "static")
-
-		self.Debug(2, fmt.Sprintf("cp -r %s %s", srcStaticPath, "static"))
-		err = CopyDir(srcStaticPath, "static")
+		targetStaticPath := path.Join(tPath[0], "static")
+		self.Debug(2, fmt.Sprintf("cp -r %s %s", srcStaticPath, targetStaticPath))
+		err = CopyDir(srcStaticPath, targetStaticPath)
 		if err != nil {
 			return
 		}

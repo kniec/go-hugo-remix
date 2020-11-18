@@ -158,7 +158,7 @@ func (w *Workshop) GenerateHugo(target string) (err error, res []string) {
 		log.Print(err.Error())
 		return
 	}
-	err = w.CopyWorkshopContent(target)
+	err = w.CopyWorkshopContent([]string{target, "content"})
 	if err != nil {
 		log.Print(err.Error())
 		return
@@ -192,10 +192,28 @@ func (w *Workshop) GenerateHugo(target string) (err error, res []string) {
 	return
 }
 
-func (w *Workshop) CopyWorkshopContent(target string) (err error) {
+/*func (w *Workshop) CopyWorkshopContent(target string) (err error) {
 	b := Base{
 		Source: w.Source,
 		Path:   ".",
 	}
 	return b.CopyContent(w.BaseDir, []string{target})
+}*/
+
+func (self *Workshop) ToMetaLines() (res []string) {
+	res = append(res, fmt.Sprintf(`title: "%s"`, self.Title))
+	return
+}
+
+func (self *Workshop) CopyWorkshopContent(tPath []string) (err error) {
+	b := CreateBase(3)
+	err = b.CopyContent(path.Join(self.BaseDir, self.Source), tPath)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	// Update _index.md after copying
+	mLines := self.ToMetaLines()
+	err = b.WalkContentDir(path.Join(tPath...), mLines)
+	return
 }

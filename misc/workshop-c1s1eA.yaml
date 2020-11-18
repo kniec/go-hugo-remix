@@ -1,4 +1,4 @@
-title: Workshop1
+title: Workshop2
 author: "Christian Kniep"
 description: "Workshop description"
 base: ./hugo
@@ -25,3 +25,9 @@ chaps:
             title: Chap1Sub1ExtA
             weight: 10
             enum: "a. "
+      - c1sub2: 
+        path: sub2
+        source: ./test/sub2
+        title: Chap1Sub2
+        weight: 20
+        enum: "2. "
